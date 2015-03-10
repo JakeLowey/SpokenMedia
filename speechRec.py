@@ -1,6 +1,6 @@
 from dragonfly.all import Grammar, CompoundRule
-import pythoncom
 import sys
+from dragonfly.actions.action_function import Function
 
 
 # Voice command rule combining spoken form and recognition processing.
@@ -15,6 +15,14 @@ grammar = Grammar("example grammar")                # Create a grammar to contai
 grammar.add_rule(ExampleRule())                     # Add the command rule to the grammar.
 grammar.load()                                      # Load the grammar.
 
-while True:
-    pythoncom.PumpWaitingMessages()
+
+def myFunt(action):
+    print("Action:", action)
+
+
+
+def hey():
+    #pythoncom.PumpWaitingMessages()
     sys.sleep(.1)
+    action = Function(myFunt)
+    action.execute({"action": "hey there!"})

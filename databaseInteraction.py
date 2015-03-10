@@ -32,46 +32,46 @@ def findclosest(title, year, response):
 
 def createinsertstatement(location, info, db):
     ins = "INSERT INTO " + db + " (title, location"
-    vals = " VALUES (`" + info.title + "`,`" + str(location) + "`"
+    vals = " VALUES ('" + info.title.replace("\'", "\'\'") + "','" + str(location).replace("\'", "\'\'") + "'"
     if info['genres']:
         ins += ", genres"
-        vals += "`" + info['genres'] + "`"
+        vals += "'" + info['genres'].replace("\'", "\'\'") + "'"
     if info['playcount']:
         ins += ", playcount"
-        vals += "`" + info['playcount'] + "`"
+        vals += "'" + info['playcount'].replace("\'", "\'\'") + "'"
     if info['actors'] and db != "music":
         ins += ", actors"
-        vals += "`" + info['actors'] + "`"
+        vals += "'" + info['actors'].replace("\'", "\'\'") + "'"
     if info['popularity']:
         ins += ", popularity"
-        vals += "`" + info['popularity'] + "`"
+        vals += "'" + info['popularity'].replace("\'", "\'\'") + "'"
     if info['releasedate']:
         ins += ", releasedate"
-        vals += "`" + info['releasedate'] + "`"
+        vals += "'" + info['releasedate'].replace("\'", "\'\'") + "'"
     if info['director'] and db != "music":
         ins += ", director"
-        vals += "`" + info['director'] + "`"
+        vals += "'" + info['director'].replace("\'", "\'\'") + "'"
     if info['length']:
         ins += ", length"
-        vals += "`" + info['length'] + "`"
+        vals += "'" + info['length'].replace("\'", "\'\'") + "'"
     if info['description'] and db != "music":
         ins += ", description"
-        vals += "`" + info['description'] + "`"
+        vals += "'" + info['description'].replace("\'", "\'\'") + "'"
     if info['artist'] and db == "music":
         ins += ", artist"
-        vals += "`" + info['artist'] + "`"
+        vals += "'" + info['artist'].replace("\'", "\'\'") + "'"
     if info['featuredartist'] and db == "music":
         ins += ", featuredartist"
-        vals += "`" + info['featuredartist'] + "`"
+        vals += "'" + info['featuredartist'].replace("\'", "\'\'") + "'"
     if info['album'] and db == "music":
         ins += ", album"
-        vals += "`" + info['album'] + "`"
+        vals += "'" + info['album'].replace("\'", "\'\'") + "'"
     if info['season'] and db == "tvshows":
         ins += ", season"
-        vals += "`" + info['season'] + "`"
+        vals += "'" + info['season'].replace("\'", "\'\'") + "'"
     if info['episode'] and db == "tvshows":
         ins += ", episode"
-        vals += "`" + info['episode'] + "`"
+        vals += "'" + info['episode'].replace("\'", "\'\'") + "'"
     ins += " )"
     vals += " )"
     return ins + vals
@@ -85,31 +85,36 @@ class DataBase:
         password = f.readline()
         password = password.strip('\n').strip('\r')
         f.close()
-        conn = pymysql.connect(host='localhost', port=3306, user=username, passwd=password, db='media')
-        self.cur = conn.cursor()
+        self.conn = pymysql.connect(host='localhost', port=3306, user=username, passwd=password, db='media')
+        self.cur = self.conn.cursor()
         f = open("tmdbAPI.txt")
         tmdb.API_KEY = f.readline().strip('\n').strip('\r')
         f.close()
         self.search = tmdb.Search()
 
-    def insertMovie(self, movieID,loc,fileName):
+    def __del__(self):
+        self.cur.close()
+        self.conn.close()
+
+    def insertMovie(self, movieID, loc, fileName):
         if not self.isitthere("movies", loc):
             if int(movieID) > 0:
                 identity = tmdb.Movies(int(movieID))
                 movieInfo = identity.info()
                 # Create insert statement
-                insertStatement =  createinsertstatement(loc, movieInfo, "movies")
+                insertStatement = createinsertstatement(loc, movieInfo, "movies")
                 # insert all the info into the database
                 self.cur.execute(insertStatement)
+                self.conn.commit()
             else:
                 movieInfo = {"title": fileName}
                 # Create insert statement
-                insertStatement =  createinsertstatement(loc, movieInfo, "movies")
+                insertStatement = createinsertstatement(loc, movieInfo, "movies")
                 # insert as much info as is known into the database
                 self.cur.execute(insertStatement)
+                self.conn.commit()
                 return False
         return True
-
 
 
     def addmovies(self, path):
@@ -122,7 +127,7 @@ class DataBase:
                     try:
                         response = self.search.movie(query=(guess['title']))
                         movieID = findclosest(guess['title'], guess['year'], response)
-                        tryInsert = self.insertMovie(movieID,os.join(root,f),f)
+                        tryInsert = self.insertMovie(movieID, os.join(root, f), f)
                         if not tryInsert:
                             pass
 
@@ -134,11 +139,15 @@ class DataBase:
             for f in files:
                 if f.endswith(vlc_formats):
                     print(f)
-                    guess = guessit.guess_episode_info()
+                    # guess = guessit.guess_episode_info()
 
-    def isitthere(db,loc):
+
+    def isitthere(self, db, loc):
         result = self.cur.execute("SELECT COUNT(*) FROM " + db + " where location = " + loc)
         if result == 0:
             return False
         else:
             return True
+
+    def getMovieList(self):
+        return self.cur.execute("Select title, location FROM movies where *")
