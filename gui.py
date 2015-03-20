@@ -7,22 +7,22 @@ from PyQt4 import QtGui, QtCore
 from databaseInteraction import *
 
 
-class Player(QtGui.QMainWindow):
+class Player(QtGui.QWidget):
     """A simple Media Player using VLC and Qt
     """
     def __init__(self, master=None):
         QtGui.QMainWindow.__init__(self, master)
-        self.setWindowTitle("Media Player")
+        # self.setWindowTitle("Media Player")
 
         # creating a basic vlc instance
-        self.instance = vlc.Instance()
+        # self.instance = vlc.Instance()
         # creating an empty vlc media player
-        self.mediaplayer = self.instance.media_player_new()
+        # self.mediaplayer = self.instance.media_player_new()
 
-        self.db = DataBase()
+        # self.db = DataBase()
 
-        self.createUI()
-        self.isPaused = False
+        self.initUI()
+        # self.isPaused = False
 
     def createUI(self):
         """Set up the user interface, signals & slots
@@ -44,8 +44,7 @@ class Player(QtGui.QMainWindow):
         self.positionslider = QtGui.QSlider(QtCore.Qt.Horizontal, self)
         self.positionslider.setToolTip("Position")
         self.positionslider.setMaximum(1000)
-        self.connect(self.positionslider,
-                     QtCore.SIGNAL("sliderMoved(int)"), self.setPosition)
+        self.connect(self.positionslider, QtCore.SIGNAL("sliderMoved(int)"), self.setPosition)
 
         self.hbuttonbox = QtGui.QHBoxLayout()
         self.playbutton = QtGui.QPushButton("Play")
@@ -64,9 +63,7 @@ class Player(QtGui.QMainWindow):
         self.volumeslider.setValue(self.mediaplayer.audio_get_volume())
         self.volumeslider.setToolTip("Volume")
         self.hbuttonbox.addWidget(self.volumeslider)
-        self.connect(self.volumeslider,
-                     QtCore.SIGNAL("valueChanged(int)"),
-                     self.setVolume)
+        self.connect(self.volumeslider, QtCore.SIGNAL("valueChanged(int)"), self.setVolume)
 
         self.vboxlayout = QtGui.QVBoxLayout()
         self.vboxlayout.addWidget(self.videoframe)
@@ -87,8 +84,7 @@ class Player(QtGui.QMainWindow):
 
         self.timer = QtCore.QTimer(self)
         self.timer.setInterval(200)
-        self.connect(self.timer, QtCore.SIGNAL("timeout()"),
-                     self.updateUI)
+        self.connect(self.timer, QtCore.SIGNAL("timeout()"), self.updateUI)
 
     def PlayPause(self):
         """Toggle play/pause status
@@ -176,7 +172,27 @@ class Player(QtGui.QMainWindow):
 
 
     def initUI(self):
-        grid = QtGui.QGridLayout();
+        grid = QtGui.QGridLayout()
         self.setLayout(grid)
+        movies = []
+        for root, dirs, files in os.walk("C:\\Users\\loweyj\\Desktop\\Movies"):
+            for f in files:
+                if f.endswith(vlc_formats):
+                    print(f)
+                    guess = guessit.guess_movie_info(f, info=["filename"])
+                    movies.append(guess["title"])
 
-        movies = self.db.getMovieList()
+        mysize = self.geometry()
+
+        numAcross = int(mysize.width()/240)
+        numHeight = int(mysize.height()/120)
+        print(str(numAcross) + " " + str(numHeight) + " \n")
+        positions = [(i,j) for i in range(numAcross) for j in range(numHeight+2)]
+        for q in range(len(movies)):
+            if (q < len(movies)):
+                button = QtGui.QPushButton(movies[(positions[q][0]*(numAcross) + positions[q][1])])
+                grid.addWidget(button,*(positions[q]))
+
+        # self.widget.move(300, 150)
+        self.setWindowTitle('Calculator')
+        self.show()

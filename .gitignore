@@ -1,0 +1,7 @@
+/.idea/
+/__pycache__/
+*.pyc
+/tmdbAPI.txt
+/SpokenMedia-Spring2015.png
+
+/databaseconnection.txt
