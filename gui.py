@@ -1,28 +1,27 @@
 __author__ = 'Jake Lowey'
 
 import sys
-import os.path
 import vlc
 from PyQt4 import QtGui, QtCore
 from databaseInteraction import *
 
 
-class Player(QtGui.QWidget):
+class Player(QtGui.QMainWindow):
     """A simple Media Player using VLC and Qt
     """
     def __init__(self, master=None):
-        QtGui.QMainWindow.__init__(self, master)
-        # self.setWindowTitle("Media Player")
+        super(Player,self).__init__()
+        self.setWindowTitle("Media Player")
 
         # creating a basic vlc instance
-        # self.instance = vlc.Instance()
+        self.instance = vlc.Instance()
         # creating an empty vlc media player
-        # self.mediaplayer = self.instance.media_player_new()
+        self.mediaplayer = self.instance.media_player_new()
 
         # self.db = DataBase()
 
-        self.initUI()
-        # self.isPaused = False
+        self.createUI()
+        self.isPaused = False
 
     def createUI(self):
         """Set up the user interface, signals & slots
@@ -171,28 +170,66 @@ class Player(QtGui.QWidget):
                 self.Stop()
 
 
+class display(QtGui.QWidget):
+
+    def __init__(self, master=None):
+        super(display, self).__init__()
+        # self.setWindowTitle("Media Player")
+        self.initUI()
+
     def initUI(self):
         grid = QtGui.QGridLayout()
         self.setLayout(grid)
         movies = []
-        for root, dirs, files in os.walk("C:\\Users\\loweyj\\Desktop\\Movies"):
+        for root, dirs, files in os.walk("D:\\"):
             for f in files:
                 if f.endswith(vlc_formats):
                     print(f)
                     guess = guessit.guess_movie_info(f, info=["filename"])
-                    movies.append(guess["title"])
+                    movies.append([guess["title"], os.path.join(root,f)])
 
         mysize = self.geometry()
 
-        numAcross = int(mysize.width()/240)
-        numHeight = int(mysize.height()/120)
-        print(str(numAcross) + " " + str(numHeight) + " \n")
-        positions = [(i,j) for i in range(numAcross) for j in range(numHeight+2)]
+        numAcross = max(int(mysize.width()/240),1)
+        # numHeight = int(mysize.height()/120)
+        # print(str(numAcross) + " " + str(numHeight) + " \n")
+        positions = []
+        for i in range(int(len(movies)/numAcross) + 2):
+            for j in range(numAcross):
+                positions.append((i,j))
+
+        self.lbl = QtGui.QLabel(self)
+        self.lbl.setText("hey there")
+        grid.addWidget(self.lbl, *(positions[-1]))
         for q in range(len(movies)):
             if (q < len(movies)):
-                button = QtGui.QPushButton(movies[(positions[q][0]*(numAcross) + positions[q][1])])
+                button = QtGui.QPushButton(movies[(positions[q][0]*(numAcross) + positions[q][1])][0])
+                button.clicked.connect(self.buttonClicked)
+                button.path = movies[(positions[q][0]*(numAcross) + positions[q][1])][1]
+                # button.emit(QtCore.SIGNAL(movies[(positions[q][0]*(numAcross) + positions[q][1])][0]), movies[(positions[q][0]*(numAcross) + positions[q][1])][1])
                 grid.addWidget(button,*(positions[q]))
 
         # self.widget.move(300, 150)
-        self.setWindowTitle('Calculator')
+
         self.show()
+
+
+    def buttonClicked(self):
+        sender = self.sender()
+        self.lbl.setText(sender.path)
+        # player = Player()
+
+
+
+class mainGUI(QtGui.QMainWindow):
+
+    def __init__(self, master=None):
+        self.mWindow = QtGui.QMainWindow.__init__(self, master)
+        self.wid = QtGui.QWidget()
+        self.buildUI()
+
+    def buildUI(self):
+        self.setWindowIcon(QtGui.QIcon('Ap_icon.png'))
+        self.buttons = display(self.wid)
+        # self.player = Player(self.mWindow)
+        # self.player.resize(640,480)

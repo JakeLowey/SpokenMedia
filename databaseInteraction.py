@@ -127,7 +127,7 @@ class DataBase:
                     try:
                         response = self.search.movie(query=(guess['title']))
                         movieID = findclosest(guess['title'], guess['year'], response)
-                        tryInsert = self.insertMovie(movieID, os.join(root, f), f)
+                        tryInsert = self.insertMovie(movieID, os.path.join(root, f), f)
                         if not tryInsert:
                             pass
 
