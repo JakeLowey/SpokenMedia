@@ -9,8 +9,9 @@ from databaseInteraction import *
 class Player(QtGui.QMainWindow):
     """A simple Media Player using VLC and Qt
     """
-    def __init__(self, master=None):
-        super(Player,self).__init__()
+
+    def __init__(self):
+        super(Player, self).__init__()
         self.setWindowTitle("Media Player")
 
         # creating a basic vlc instance
@@ -25,18 +26,19 @@ class Player(QtGui.QMainWindow):
 
     def createUI(self):
         """Set up the user interface, signals & slots
+        :rtype : None
         """
         self.widget = QtGui.QWidget(self)
         self.setCentralWidget(self.widget)
 
         # In this widget, the video will be drawn
-        if sys.platform == "darwin": # for MacOS
+        if sys.platform == "darwin":  # for MacOS
             self.videoframe = QtGui.QMacCocoaViewContainer(0)
         else:
             self.videoframe = QtGui.QFrame()
         self.palette = self.videoframe.palette()
-        self.palette.setColor (QtGui.QPalette.Window,
-                               QtGui.QColor(0,0,0))
+        self.palette.setColor(QtGui.QPalette.Window,
+                              QtGui.QColor(0, 0, 0))
         self.videoframe.setPalette(self.palette)
         self.videoframe.setAutoFillBackground(True)
 
@@ -132,11 +134,11 @@ class Player(QtGui.QMainWindow):
         # this is platform specific!
         # you have to give the id of the QFrame (or similar object) to
         # vlc, different platforms have different functions for this
-        if sys.platform.startswith('linux'): # for Linux using the X Server
+        if sys.platform.startswith('linux'):  # for Linux using the X Server
             self.mediaplayer.set_xwindow(self.videoframe.winId())
-        elif sys.platform == "win32": # for Windows
+        elif sys.platform == "win32":  # for Windows
             self.mediaplayer.set_hwnd(self.videoframe.winId())
-        elif sys.platform == "darwin": # for MacOS
+        elif sys.platform == "darwin":  # for MacOS
             self.mediaplayer.set_nsobject(self.videoframe.winId())
         self.PlayPause()
 
@@ -172,7 +174,9 @@ class Player(QtGui.QMainWindow):
 
 class display(QtGui.QWidget):
 
-    def __init__(self, master=None):
+    movie  = ""
+
+    def __init__(self, parent=None):
         super(display, self).__init__()
         # self.setWindowTitle("Media Player")
         self.initUI()
@@ -186,28 +190,28 @@ class display(QtGui.QWidget):
                 if f.endswith(vlc_formats):
                     print(f)
                     guess = guessit.guess_movie_info(f, info=["filename"])
-                    movies.append([guess["title"], os.path.join(root,f)])
+                    movies.append([guess["title"], os.path.join(root, f)])
 
         mysize = self.geometry()
 
-        numAcross = max(int(mysize.width()/240),1)
+        numAcross = max(int(mysize.width() / 240), 1)
         # numHeight = int(mysize.height()/120)
         # print(str(numAcross) + " " + str(numHeight) + " \n")
         positions = []
-        for i in range(int(len(movies)/numAcross) + 2):
+        for i in range(int(len(movies) / numAcross) + 2):
             for j in range(numAcross):
-                positions.append((i,j))
+                positions.append((i, j))
 
         self.lbl = QtGui.QLabel(self)
         self.lbl.setText("hey there")
         grid.addWidget(self.lbl, *(positions[-1]))
         for q in range(len(movies)):
             if (q < len(movies)):
-                button = QtGui.QPushButton(movies[(positions[q][0]*(numAcross) + positions[q][1])][0])
+                button = QtGui.QPushButton(movies[(positions[q][0] * (numAcross) + positions[q][1])][0])
                 button.clicked.connect(self.buttonClicked)
-                button.path = movies[(positions[q][0]*(numAcross) + positions[q][1])][1]
+                button.path = movies[(positions[q][0] * (numAcross) + positions[q][1])][1]
                 # button.emit(QtCore.SIGNAL(movies[(positions[q][0]*(numAcross) + positions[q][1])][0]), movies[(positions[q][0]*(numAcross) + positions[q][1])][1])
-                grid.addWidget(button,*(positions[q]))
+                grid.addWidget(button, *(positions[q]))
 
         # self.widget.move(300, 150)
 
@@ -217,19 +221,17 @@ class display(QtGui.QWidget):
     def buttonClicked(self):
         sender = self.sender()
         self.lbl.setText(sender.path)
-        # player = Player()
+        self.movie = sender.path
 
 
 
 class mainGUI(QtGui.QMainWindow):
-
     def __init__(self, master=None):
         self.mWindow = QtGui.QMainWindow.__init__(self, master)
-        self.wid = QtGui.QWidget()
+        # self.wid = QtGui.QWidget()
         self.buildUI()
 
     def buildUI(self):
-        self.setWindowIcon(QtGui.QIcon('Ap_icon.png'))
-        self.buttons = display(self.wid)
-        # self.player = Player(self.mWindow)
+        self.buttons = display()
+        # self.player = Player()
         # self.player.resize(640,480)
