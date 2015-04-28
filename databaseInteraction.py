@@ -129,10 +129,10 @@ class DataBase:
                         movieID = findclosest(guess['title'], guess['year'], response)
                         tryInsert = self.insertMovie(movieID, os.path.join(root, f), f)
                         if not tryInsert:
-                            pass
+                            print("Movie inserted without information.")
 
                     except:
-                        pass
+                        print("Did not insert movie")
 
     def addtvshows(self, path):
         for root, dirs, files in os.walk(path):
